@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rise Up Game</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black; /* Changed background color to black */
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            background: url('https://i.postimg.cc/MvbqjvR1/background.png') repeat-y center top;
+            background-size: cover;
+            overflow: hidden;
+            border: 2px solid #000;
+        }
+        #balloon {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 75px;
+            background-color: gray; /* Changed balloon color to gray */
+            border-radius: 50% 50% 60% 60%;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #string {
+            position: absolute;
+            width: 2px;
+            height: 300px;
+            background-color: black;
+            top: 75px;
+            left: 49%;
+            transform: translateX(-50%);
+        }
+        #shield {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: gray; /* Changed shield color to gray */
+            border-radius: 50%;
+            border: 2px solid white; /* Added white border */
+            box-shadow: 0 0 10px white; /* Added white shadow */
+        }
+        .obstacle {
+            position: absolute;
+            width: 50px;
+            height: 20px;
+            background-color: black;
+        }
+        #scoreBoard {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            color: white; /* Changed text color to white */
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            color: red;
+            display: none;
+            text-align: center;
+        }
+        #retryButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            outline: none;
+        }
+        #retryButton:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="balloon">
+            <span style="color: white; font-size: 12px;">UP</span>
+            <div id="string"></div>
+        </div>
+        <div id="shield"></div>
+        <div id="scoreBoard">Score: 0</div>
+        <div id="gameOver">
+            Game Over<br>
+            <button id="retryButton">Retry</button>
+        </div>
+    </div>
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const balloon = document.getElementById('balloon');
+        const shield = document.getElementById('shield');
+        const scoreBoard = document.getElementById('scoreBoard');
+        const gameOverText = document.getElementById('gameOver');
+        const retryButton = document.getElementById('retryButton');
+        let shieldX = 150;
+        let shieldY = 500;
+        let obstacles = [];
+        let obstacleFrequency = 100;
+        let frame = 0;
+        let score = 0;
+        let gameIsOver = false;
+        let obstacleSpeed = 2;
+        let backgroundSpeed = 2;
+        let backgroundY = 0;
+
+        function update() {
+            if (gameIsOver) return;
+
+            frame++;
+            shield.style.left = `${shieldX}px`;
+            shield.style.top = `${shieldY}px`;
+
+            // Move background
+            backgroundY += backgroundSpeed; // Increased speed of background movement
+            gameContainer.style.backgroundPositionY = `${backgroundY}px`;
+
+            // Create new obstacles
+            if (frame % obstacleFrequency === 0) {
+                createObstacles(2 + Math.floor(score / 10)); // Increase the number of obstacles over time
+            }
+
+            // Move and detect collision with obstacles
+            obstacles.forEach((obstacle, index) => {
+                obstacle.style.top = `${parseInt(obstacle.style.top) + obstacleSpeed}px`;
+
+                if (detectCollision(obstacle, shield)) {
+                    // Remove obstacle if it collides with the shield
+                    obstacle.remove();
+                    obstacles.splice(index, 1);
+                    score++;
+                    scoreBoard.textContent = `Score: ${score}`;
+
+                    // Increase speed after every 10 points
+                    if (score % 10 === 0) {
+                        obstacleSpeed += 1;
+                        backgroundSpeed += 1;
+                    }
+                } else if (detectCollision(obstacle, balloon)) {
+                    // End game if the balloon collides with an obstacle
+                    gameOver();
+                    return;
+                }
+
+                // Remove obstacles that are off the screen
+                if (parseInt(obstacle.style.top) > 600) {
+                    obstacle.remove();
+                    obstacles.splice(index, 1);
+                }
+            });
+
+            requestAnimationFrame(update);
+        }
+
+        function createObstacles(num) {
+            for (let i = 0; i < num; i++) {
+                const obstacle = document.createElement('div');
+                obstacle.className = 'obstacle';
+                obstacle.style.left = `${Math.random() * 350}px`;
+                obstacle.style.top = `0px`;
+                gameContainer.appendChild(obstacle);
+                obstacles.push(obstacle);
+            }
+        }
+
+        function detectCollision(obstacle, entity) {
+            const oRect = obstacle.getBoundingClientRect();
+            const eRect = entity.getBoundingClientRect();
+            return !(oRect.right < eRect.left || oRect.left > eRect.right || oRect.bottom < eRect.top || oRect.top > eRect.bottom);
+        }
+
+        function gameOver() {
+            gameIsOver = true;
+            gameOverText.style.display = 'block';
+        }
+
+        retryButton.addEventListener('click', () => {
+            // Reset game state
+            shieldX = 150;
+            shieldY = 500;
+            obstacles.forEach(obstacle => obstacle.remove());
+            obstacles = [];
+            frame = 0;
+            score = 0;
+            obstacleSpeed = 2;
+            backgroundSpeed = 2;
+            backgroundY = 0;
+            gameIsOver = false;
+            gameOverText.style.display = 'none';
+            scoreBoard.textContent = `Score: ${score}`;
+            update();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            const rect = gameContainer.getBoundingClientRect();
+            shieldX = e.clientX - rect.left - shield.clientWidth / 2;
+            shieldY = e.clientY - rect.top - shield.clientHeight / 2;
+        });
+
+        update();
+    </script>
+</body>
+</html>

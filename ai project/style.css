@@ -1,0 +1,22 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #87CEEB; /* Sky blue background */
+    font-family: Arial, sans-serif;
+}
+
+#gameContainer {
+    width: 400px;
+    height: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    background: #70c5ce; /* Sky blue background for the canvas */
+    display: block;
+}
